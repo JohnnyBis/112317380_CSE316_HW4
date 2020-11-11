@@ -47,6 +47,30 @@ app.get("/queryDB", (req, res) => {
   });
 });
 
+app.get("/queryDB/all_fields/:allFields", (req, res) => {
+  MongoClient.connect(url, async function (err, client) {
+    if (err) {
+      throw new Error('Database failed to connect!');
+    } else {
+      console.log('MongoDB successfully connected on port 8000.');
+    }
+
+    let allFields = req.params.allFields;
+
+    const db = client.db("ClassFind");
+    let collection = db.collection("cse-courses");
+    
+    let cursor = collection.find({
+      "Title": {
+        $regex: `${title}`, $options: 'i'
+      }
+    });
+    
+    const temp = await cursor.toArray();
+    res.json(temp);
+  });
+});
+
 app.get("/queryDB/id/:id", (req, res) => {
   MongoClient.connect(url, async function (err, client) {
     if (err) {
@@ -106,9 +130,7 @@ app.get('/queryDB/days/:days', (req, res) => {
       const db = client.db("ClassFind");
       let collection = db.collection("cse-courses");
       let cursor = collection.find({
-        "Days": {
-          $regex: `${days}`, $options: 'i'
-        }
+        "Days": { $regex:`^${days}$`, $options: 'i'}
       });
       const temp = await cursor.toArray();
       res.json(temp);

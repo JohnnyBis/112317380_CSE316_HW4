@@ -1,37 +1,42 @@
 let fetchedData = null;
 
-fetch("http://localhost:8000/queryDB").then(result => {
-    return result.json();
-}).then(data => {
-    fetchedData = data;
-    let table = document.getElementsByClassName("courses-table");
-    for (let i = 0; i < data.length; i++) {
-        let row = table[0].insertRow(0);
-        let th = document.createElement('th');
-        th.innerHTML = i + 1;
-        row.appendChild(th);
-        let cell1 = row.insertCell(1);
-        let cell2 = row.insertCell(2);
-        let cell3 = row.insertCell(3);
-        let cell4 = row.insertCell(4);
-        let cell5 = row.insertCell(5);
-        let cell6 = row.insertCell(6);
-        cell1.innerHTML = data[i]["Title"] + " - " + data[i]["Subj"] + " " + data[i]["CRS"];
-        cell2.innerHTML = data[i]["Instr"];
-        cell3.innerHTML = "LEC: " + data[i]["Days"] + " " + data[i]["Start Time"] + " - " + data[i]["End Time"];
-        cell4.innerHTML = "Room: " + data[i]["Room"];
-        cell6.innerHTML = `<button id=${data[i]["_id"]} type="button" class="btn btn-primary add-button" onclick='listenToAddButton(this)'>Add</button>`;
-    }
+function getAllCourses() {
+    fetch("http://localhost:8000/queryDB").then(result => {
+        return result.json();
+    }).then(data => {
+        fetchedData = data;
+        let table = document.getElementsByClassName("courses-table");
+        table[0].innerHTML = "";
+        for (let i = 0; i < data.length; i++) {
+            let row = table[0].insertRow(0);
+            let th = document.createElement('th');
+            th.innerHTML = i + 1;
+            row.appendChild(th);
+            let cell1 = row.insertCell(1);
+            let cell2 = row.insertCell(2);
+            let cell3 = row.insertCell(3);
+            let cell4 = row.insertCell(4);
+            let cell5 = row.insertCell(5);
+            let cell6 = row.insertCell(6);
+            cell1.innerHTML = data[i]["Title"] + " - " + data[i]["Subj"] + " " + data[i]["CRS"];
+            cell2.innerHTML = data[i]["Instr"];
+            cell3.innerHTML = "LEC: " + data[i]["Days"] + " " + data[i]["Start Time"] + " - " + data[i]["End Time"];
+            cell4.innerHTML = "Room: " + data[i]["Room"];
+            cell6.innerHTML = `<button id=${data[i]["_id"]} type="button" class="btn btn-primary add-button" onclick='listenToAddButton(this)'>Add</button>`;
+        }
 
-    getCurrentSavedClasses();
-    
-});
+        getCurrentSavedClasses();
+
+    });
+}
+
+getAllCourses();
 
 function searchBy(field, fieldValue) {
     let url = "http://localhost:8000/queryDB/";
     switch (field) {
         case "Class number":
-            url += "classNumber/" + fieldValue;
+            url += "class_number/" + fieldValue;
             break;
         case "Title":
             url += "title/" + fieldValue;
@@ -69,6 +74,9 @@ function searchBy(field, fieldValue) {
             cell6.innerHTML = `<button id=${data[i]["_id"]} type="button" class="btn btn-primary add-button" onclick='listenToAddButton(this)'>Add</button>`;
         }
     });
+
+    getCurrentSavedClasses();
+
 }
 
 let dropdownValue = "All fields";
@@ -77,7 +85,11 @@ function listenForSearchInput() {
     $(document).ready(function () {
         $('#find-button').click(function (event) {
             let input = $('#searchField').val();
-            searchBy(dropdownValue, input);
+            if (input == "") {
+                getAllCourses();
+            }else{
+                searchBy(dropdownValue, input);
+            }
             event.preventDefault();
         });
     });
@@ -103,6 +115,14 @@ function listenToAddButton(event) {
     } else {
         $(event).html("Remove");
         addedClasses.push(classId);
+    }
+}
+
+function saveClasses(event) {
+    if (addedClasses.length >= 1) {
+        postRequestToDB(addedClasses);
+    } else {
+        postRequestToDB(null);
     }
 }
 
