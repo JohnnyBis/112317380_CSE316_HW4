@@ -56,16 +56,52 @@ app.get("/queryDB/all_fields/:allFields", (req, res) => {
     }
 
     let allFields = req.params.allFields;
-
+    let allFieldsArray = allFields.split(",");
     const db = client.db("ClassFind");
     let collection = db.collection("cse-courses");
-    
-    let cursor = collection.find({
-      "Title": {
-        $regex: `${title}`, $options: 'i'
+    let regexArray = []
+    console.log(allFieldsArray);
+
+    for (i = 0; i < allFieldsArray.length; i++) {
+      let parseCrsNum = parseInt(allFieldsArray[i].trim());
+      if(!isNaN(parseCrsNum)) {
+        regexArray.push(parseCrsNum);
       }
+      regexArray.push(new RegExp(allFieldsArray[i].trim(), "i"));
+    }
+
+    console.log(regexArray);
+
+    let cursor = collection.find({
+      $or: [
+        {
+          "Title": {
+            $in: regexArray,
+          }
+        },
+        {
+          "CRS": {
+            $in: regexArray,
+          }
+        },
+        {
+          "Days": {
+            $in: regexArray,
+          }
+        },
+        {
+          "Start Time": {
+              $in: regexArray,
+            }
+        },
+        {
+          "End Time": {
+            $in: regexArray,
+          }
+        }
+      ]
     });
-    
+
     const temp = await cursor.toArray();
     res.json(temp);
   });
@@ -86,7 +122,7 @@ app.get("/queryDB/id/:id", (req, res) => {
     let cursor = collection.find({
       "_id": ObjectId(courseId.toString())
     });
-    
+
     const temp = await cursor.toArray();
     res.json(temp);
   });
@@ -101,7 +137,8 @@ app.get('/queryDB/title/:title', (req, res) => {
 
     let cursor = collection.find({
       "Title": {
-        $regex: `${title}`, $options: 'i'
+        $regex: `${title}`,
+        $options: 'i'
       }
     });
     const temp = await cursor.toArray();
@@ -130,11 +167,14 @@ app.get('/queryDB/days/:days', (req, res) => {
       const db = client.db("ClassFind");
       let collection = db.collection("cse-courses");
       let cursor = collection.find({
-        "Days": { $regex:`^${days}$`, $options: 'i'}
+        "Days": {
+          $regex: `^${days}$`,
+          $options: 'i'
+        }
       });
       const temp = await cursor.toArray();
       res.json(temp);
-    }catch (err){
+    } catch (err) {
       console.log(err);
     }
   });
@@ -146,14 +186,24 @@ app.get('/queryDB/time/:times', (req, res) => {
       let times = req.params.times;
       const db = client.db("ClassFind");
       let collection = db.collection("cse-courses");
-      let cursor = collection.find({ $or:[
-          {"Start Time":{$regex:`${times}`, $options: 'i'}},
-          {"End Time":{$regex:`${times}`, $options: 'i'}}
+      let cursor = collection.find({
+        $or: [{
+            "Start Time": {
+              $regex: `${times}`,
+              $options: 'i'
+            }
+          },
+          {
+            "End Time": {
+              $regex: `${times}`,
+              $options: 'i'
+            }
+          }
         ]
       });
       const temp = await cursor.toArray();
       res.json(temp);
-    }catch (err){
+    } catch (err) {
       console.log(err);
     }
   });
@@ -169,12 +219,12 @@ app.get('/queryDB/getSavedClasses', (req, res) => {
       });
       const temp = await cursor.toArray();
       res.json(temp);
-    }catch (err){
+    } catch (err) {
       console.log(err);
     }
   });
 });
-  
+
 
 app.post('/queryDB/postSavedClasses', (req, res) => {
   MongoClient.connect(url, function (err, client) {
@@ -186,9 +236,15 @@ app.post('/queryDB/postSavedClasses', (req, res) => {
         _id: ObjectId("5f9b31b2f438aaed4e3e8ade"),
         saved_courses: courseList
       });
-      collection.updateOne({_id: ObjectId("5f9b31b2f438aaed4e3e8ade")}, {$set: objectList}, {upsert:true});
-      
-    }catch (err){
+      collection.updateOne({
+        _id: ObjectId("5f9b31b2f438aaed4e3e8ade")
+      }, {
+        $set: objectList
+      }, {
+        upsert: true
+      });
+
+    } catch (err) {
       console.log(err);
     }
   });

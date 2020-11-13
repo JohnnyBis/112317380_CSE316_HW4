@@ -47,6 +47,8 @@ function searchBy(field, fieldValue) {
         case "Time":
             url += "time/" + fieldValue;
             break;
+        case "All fields":
+            url += "all_fields/" + fieldValue;
         default:
             break;
     }

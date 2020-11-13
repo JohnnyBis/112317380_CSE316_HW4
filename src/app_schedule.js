@@ -12,14 +12,23 @@ let daysDict = {
 }
 
 function createSchedule(courseObjects) {
+    // //Remove duplicates
+    // let counter = new Set();
+    // for(i = 0; i < courseObjects.length; i++) {
+    //     counter.add(courseObjects[i]["start"]);
+    // }
+    // // console.log(courseObjects.length === counter);
+    // console.log(counter)
 
     var calendarEl = document.getElementById('calendar');
     console.log(courseObjects);
+
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'timeGridWeek',
         initialDate: '2021-01-25',
         headerToolbar: false,
-        events: courseObjects
+        events: courseObjects,
+        eventOverlap: false
     });
     calendar.render();
 }
@@ -38,7 +47,8 @@ function fetchSavedCourses() {
             })
             courseObjects.push(objectResult);
         }
-        createSchedule(courseObjects);
+        console.log(courseObjects);
+        createSchedule([].concat(...courseObjects));
     });
 }
 
@@ -57,13 +67,21 @@ function fetchCourseById(id) {
         let startTimeResult = convertTimeToFormat(data[0]["Start Time"]);
         let endTimeResult = convertTimeToFormat(data[0]["End Time"]);
         let i = 0;
+        let courseDaysArray = []
+        let preDayRec = days[0] + days[1] + days[2];
+        let preDayRe = days[0] + days[1];
         while (i < days.length) {
+            if (preDayRec == "REC") {
+                i += 3;
+            } else if (preDayRe == "RE") {
+                i += 2;
+            }
             const classObject = {
                 title: `${data[0]["Subj"]} ${data[0]["CRS"]}`,
                 start: '',
                 end: ''
             };
-            console.log(days[i], days[i+1]);
+            console.log(days[i], days[i + 1]);
             if (days[i] == "T" && days[i + 1] == "U") {
                 classObject.start = `2021-01-${daysDict["TU"]}T${startTimeResult}`;
                 classObject.end = `2021-01-${daysDict["TU"]}T${endTimeResult}`;
@@ -79,8 +97,9 @@ function fetchCourseById(id) {
                 classObject.end = `2021-01-${daysDict[days[i]]}T${endTimeResult}`;
                 i += 1;
             }
-            return classObject;
+            courseDaysArray.push(classObject);
         }
+        return courseDaysArray;
     });
 }
 
